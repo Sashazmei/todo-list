@@ -1,11 +1,16 @@
 from django.urls import path
-from .views import task_list, create_task, take_task
-from .views import register_view
-
+from .views import (
+    TaskListCreateAPIView,
+    TaskRetrieveUpdateDestroyAPIView,
+    TakeTaskAPIView,
+    register_view,
+    task_list  # 👈 добавили view для главной
+)
 
 urlpatterns = [
-    path('', task_list, name='task_list'),
-    path('create/', create_task, name='create_task'),
-    path('take/<int:task_id>/', take_task, name='take_task'),
+    path('', task_list, name='task_list'),  # 👈 теперь / ведёт на HTML-шаблон
+    path('api/tasks/', TaskListCreateAPIView.as_view(), name='task-list-create'),
+    path('api/tasks/<int:pk>/', TaskRetrieveUpdateDestroyAPIView.as_view(), name='task-detail'),
+    path('api/tasks/<int:task_id>/take/', TakeTaskAPIView.as_view(), name='task-take'),
     path('register/', register_view, name='register'),
 ]
