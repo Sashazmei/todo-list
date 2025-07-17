@@ -3,8 +3,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, get_object_or_404
+from django.views import View
+from django.views.generic import ListView, FormView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import Task
 from .serializers import TaskSerializer
@@ -37,18 +39,18 @@ class TakeTaskAPIView(APIView):
         return Response({'status': 'task taken'}, status=status.HTTP_200_OK)
 
 
-def register_view(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('task_list')
-    else:
-        form = UserCreationForm()
-    return render(request, 'registration/register.html', {'form': form})
+class RegisterView(FormView):
+    template_name = 'registration/register.html'
+    form_class = UserCreationForm
+    success_url = '/tasks/'  # или используйте reverse_lazy('task_list')
 
-@login_required
-def task_list(request):
-    tasks = Task.objects.all()
-    return render(request, 'tasks/task_list.html', {'tasks': tasks})
+    def form_valid(self, form):
+        user = form.save()
+        login(self.request, user)
+        return redirect(self.get_success_url())
+
+
+class TaskListView(LoginRequiredMixin, ListView):
+    model = Task
+    template_name = 'tasks/task_list.html'
+    context_object_name = 'tasks'
