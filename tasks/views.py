@@ -4,9 +4,9 @@ from rest_framework.views import APIView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.shortcuts import redirect, get_object_or_404
-from django.views import View
-from django.views.generic import ListView, FormView
+from django.views.generic import ListView, FormView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
 
 from .models import Task
 from .serializers import TaskSerializer
@@ -42,7 +42,7 @@ class TakeTaskAPIView(APIView):
 class RegisterView(FormView):
     template_name = 'registration/register.html'
     form_class = UserCreationForm
-    success_url = '/tasks/'  # или используйте reverse_lazy('task_list')
+    success_url = reverse_lazy('task_list')
 
     def form_valid(self, form):
         user = form.save()
@@ -54,3 +54,31 @@ class TaskListView(LoginRequiredMixin, ListView):
     model = Task
     template_name = 'tasks/task_list.html'
     context_object_name = 'tasks'
+    login_url = '/accounts/login/'
+
+
+class TaskCreateView(LoginRequiredMixin, CreateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'tasks/task_form.html'
+    success_url = reverse_lazy('task_list')
+    login_url = '/accounts/login/'
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+
+class TaskUpdateView(LoginRequiredMixin, UpdateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'tasks/task_form.html'
+    success_url = reverse_lazy('task_list')
+    login_url = '/accounts/login/'
+
+
+class TaskDeleteView(LoginRequiredMixin, DeleteView):
+    model = Task
+    template_name = 'tasks/task_confirm_delete.html'
+    success_url = reverse_lazy('task_list')
+    login_url = '/accounts/login/'
